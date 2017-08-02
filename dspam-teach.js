@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const db = require('level')('./dspam-learn-db');
+const db = require('dirty')('dspam-teach.db');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
@@ -8,13 +8,10 @@ const { set, map, zip, filter, merge } = require('lodash/fp');
 const { MailParser } = require('mailparser');
 const { spamDir, innocentDir, age } = require('yargs').argv;
 
-const dbPut = promisify(db.put).bind(db);
-const dbGet = promisify(db.get).bind(db);
 const readdir = promisify(fs.readdir);
-
 const setDirType = set('dirType');
 
-getTypedMails().then(learn);
+db.on('load', () => getTypedMails().then(learn));
 
 function learn(mails) {
     mails.forEach(({ dirType, dspamType, subject }) => {
@@ -50,8 +47,8 @@ async function addHeaders(mails) {
     return map(([mail, headers]) => merge(mail, headers), zip(mails, headers));
 }
 
-async function addDbType(mails) {
-    const types = await Promise.all(map(getOldType, mails));
+function addDbType(mails) {
+    const types = map(getOldType, mails);
     return map(([mail, dbType]) => set('dbType', dbType, mail), zip(mails, types));
 }
 
@@ -79,18 +76,9 @@ function inTimeframeFilter({ filename }) {
     return Date.now() - date <= age * 24 * 60 * 60 * 1000;
 }
 
-async function getOldType({ filename }) {
+function getOldType({ filename }) {
     const id = getId(filename);
-
-    try {
-        return await dbGet(id);
-    } catch (error) {
-        if (error.notFound) {
-            return null;
-        }
-
-        throw error;
-    }
+    return db.get(id);
 }
 
 function getId(filename) {
