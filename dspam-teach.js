@@ -14,7 +14,7 @@ const setDirType = set('dirType');
 db.on('load', () => getTypedMails().then(learn));
 
 function learn(mails) {
-    mails.forEach(({ dirType, dspamType, subject }) => {
+    mails.forEach(({ filename, dirType, dspamType, subject }) => {
         if (dirType === 'innocent' && dspamType === 'spam') {
             console.log(`reclassify '${subject}' as innocent`);
         } else if (dirType === 'spam' && dspamType === 'innocent') {
@@ -24,6 +24,7 @@ function learn(mails) {
         } else if (dirType === 'spam' && !dspamType) {
             console.log(`classify '${subject}' as spam`);
         }
+        db.set(getId(filename), dirType);
     });
 }
 
