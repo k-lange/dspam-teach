@@ -1,8 +1,8 @@
 {
-  "name": "dspam-learn",
+  "name": "dspam-teach",
   "version": "1.0.0",
   "description": "",
-  "bin" : { "dspam-learn" : "./dspam-learn.js" },
+  "bin" : { "dspam-teach" : "./dspam-teach.js" },
   "dependencies": {
     "level": "^1.7.0",
     "lodash": "^4.17.4",
@@ -15,12 +15,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/k-lange/dspam-learn.git"
+    "url": "git+https://github.com/k-lange/dspam-teach.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/k-lange/dspam-learn/issues"
+    "url": "https://github.com/k-lange/dspam-teach/issues"
   },
-  "homepage": "https://github.com/k-lange/dspam-learn#readme"
+  "homepage": "https://github.com/k-lange/dspam-teach#readme"
 }
