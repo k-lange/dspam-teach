@@ -2,7 +2,7 @@
 
 const db = require('dirty')('dspam-teach.db');
 const { promisify } = require('util');
-const fs = require('fs');
+const fs = require('graceful-fs');
 const path = require('path');
 const { set, map, zip, filter, merge } = require('lodash/fp');
 const { MailParser } = require('mailparser');
