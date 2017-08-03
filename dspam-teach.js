@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-const db = require('dirty')('dspam-teach.db');
+const { spamDir, innocentDir, age, dbPath, dspamBin } = require('yargs').argv;
+const db = require('dirty')(dbPath);
 const { promisify } = require('util');
 const fs = require('graceful-fs');
 const path = require('path');
 const { set, map, zip, filter, merge } = require('lodash/fp');
 const { MailParser } = require('mailparser');
-const { spamDir, innocentDir, age } = require('yargs').argv;
+const { execSync } = require('child_process');
 
 const readdir = promisify(fs.readdir);
 const setDirType = set('dirType');
@@ -14,16 +15,20 @@ const setDirType = set('dirType');
 db.on('load', () => getTypedMails().then(learn));
 
 function learn(mails) {
-    mails.forEach(({ filename, dirType, dspamType, subject }) => {
-        if (dirType === 'innocent' && dspamType === 'spam') {
-            console.log(`reclassify '${subject}' as innocent`);
-        } else if (dirType === 'spam' && dspamType === 'innocent') {
-            console.log(`reclassify '${subject}' as spam`);
-        } else if (dirType === 'innocent' && !dspamType) {
-            console.log(`classify '${subject}' as innocent`);
-        } else if (dirType === 'spam' && !dspamType) {
-            console.log(`classify '${subject}' as spam`);
+    mails.forEach(({ filename, filepath, dirType, dspamType, subject }) => {
+        if (!dspamType) {
+            if (dirType === 'innocent') {
+                console.log(`classify '${subject}' as innocent`);
+                runDspam(filepath, dirType, 'corpus');
+            } else if (dirType === 'spam') {
+                console.log(`classify '${subject}' as spam`);
+                runDspam(filepath, dirType, 'inoculation');
+            }
+        } else if (dspamType !== dirType) {
+            console.log(`reclassify '${subject}' as ${dirType}`);
+            runDspam(filepath, dirType, 'error');
         }
+
         db.set(getId(filename), dirType);
     });
 }
@@ -37,11 +42,6 @@ async function getTypedMails() {
         .then(filter(({ dbType, dirType }) => dbType !== dirType))
         .then(addHeaders);
 }
-
-// function learnMail(type, { filename, filepath }) {
-//     const id = getId(filename);
-//     dbPut(filename, type);
-// }
 
 async function addHeaders(mails) {
     const headers = await Promise.all(map(getHeaders, mails));
@@ -98,4 +98,14 @@ function getHeaders({ filepath }) {
 
         fs.createReadStream(filepath).pipe(parser).on('error', reject);
     });
+}
+
+function runDspam(filepath, type, source) {
+    const args = `  --class=${type} --source=${source} --stdout < ${filepath}`;
+
+    if (dspamBin) {
+        return console.log(execSync(dspamBin + args));
+    }
+
+    console.log('No dspam provided. Args would be:', args);
 }
