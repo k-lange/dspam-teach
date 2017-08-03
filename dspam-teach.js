@@ -31,6 +31,8 @@ function learn(mails) {
 
         db.set(getId(filename), dirType);
     });
+
+    console.log(`dspam-teach ran successfully. ${mails.length} mails processed.`);
 }
 
 async function getTypedMails() {
