@@ -104,7 +104,7 @@ function runDspam(filepath, type, source) {
     const args = `  --class=${type} --source=${source} --stdout < ${filepath}`;
 
     if (dspamBin) {
-        return console.log(execSync(dspamBin + args));
+        return console.log(execSync(dspamBin + args).toString());
     }
 
     console.log('No dspam provided. Args would be:', args);
