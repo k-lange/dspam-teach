@@ -93,13 +93,25 @@ function getHeaders({ filepath }) {
         const parser = new MailParser();
 
         parser.on('headers', headers => {
-            const dspamType = (headers.get('x-dspam-result') || '').toLowerCase();
+            const dspamType = normalizeDspamType(headers.get('x-dspam-result'));
             const subject = headers.get('subject');
             resolve({ dspamType, subject });
         });
 
         fs.createReadStream(filepath).pipe(parser).on('error', reject);
     });
+}
+
+function normalizeDspamType(type) {
+    if (!type) {
+        return;
+    }
+
+    if (type === 'Whitelisted') {
+        return 'innocent';
+    }
+
+    return type.toLowerCase();
 }
 
 function runDspam(filepath, type, source) {
